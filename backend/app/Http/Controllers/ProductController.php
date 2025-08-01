@@ -3,7 +3,6 @@
 namespace App\Http\Controllers;
 
 use App\Models\Product;
-use App\Models\Category;
 use App\Providers\ResponseServiceProvider;
 use Illuminate\Http\Request;
 
@@ -25,15 +24,13 @@ class ProductController extends Controller
                 })
                 ->paginate(15);
 
-            return ResponseServiceProvider::response(
+            return ResponseHelper::basicResponse(
                 200,
                 $products,
                 'Products retrieved successfully'
             );
         } catch (\Throwable $th) {
-            return ResponseServiceProvider::response(
-                500,
-                [],
+            return ResponseHelper::serverError(
                 'An error occurred while retrieving products',
                 $th->getMessage()
             );
@@ -54,15 +51,13 @@ class ProductController extends Controller
     
             $product = Product::query()->create($validated);
 
-            return ResponseServiceProvider::response(
+            return ResponseHelper::basicResponse(
                 200,
                 $product,
                 'Product created successfully'
             );
         } catch (\Throwable $th) {
-            return ResponseServiceProvider::response(
-                500,
-                [],
+            return ResponseHelper::serverError(
                 'An error occurred while creating the product',
                 $th->getMessage()
             );
@@ -72,17 +67,13 @@ class ProductController extends Controller
     public function show(Product $product)
     {
         try {
-            $product->load('category');
-
-            return ResponseServiceProvider::response(
+            return ResponseHelper::basicResponse(
                 200,
                 $product,
                 'Product retrieved successfully'
             );
         } catch (\Throwable $th) {
-            return ResponseServiceProvider::response(
-                500,
-                [],
+            return ResponseHelper::serverError(
                 'An error occurred while retrieving the product',
                 $th->getMessage()
             );
@@ -103,15 +94,13 @@ class ProductController extends Controller
     
             $product->lockForUpdate()->update($validated);
 
-            return ResponseServiceProvider::response(
+            return ResponseHelper::basicResponse(
                 200,
                 $product,
                 'Product updated successfully'
             );
         } catch (\Throwable $th) {
-            return ResponseServiceProvider::response(
-                500,
-                [],
+            return ResponseHelper::serverError(
                 'An error occurred while updating the product',
                 $th->getMessage()
             );
@@ -123,15 +112,13 @@ class ProductController extends Controller
         try {
             $product->delete();
 
-            return ResponseServiceProvider::response(
+            return ResponseHelper::basicResponse(
                 200,
                 [],
                 'Product deleted successfully'
             );
         } catch (\Throwable $th) {
-            return ResponseServiceProvider::response(
-                500,
-                [],
+            return ResponseHelper::serverError(
                 'An error occurred while deleting the product',
                 $th->getMessage()
             );

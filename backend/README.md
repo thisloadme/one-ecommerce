@@ -16,9 +16,9 @@ This is a simple multi-tenancy Laravel application that demonstrates how to buil
 ### Multi-Tenancy Strategy
 
 This application uses the **Database-per-Tenant** strategy:
-- Each tenant has a separate MySQL database
+- Each tenant has a separate PostgreSQL database
 - Tenant information is stored in a central `tenants` table
-- Domain-based tenant identification
+- Database name-based tenant identification
 - Dynamic database connection switching
 
 ### Key Components
@@ -35,7 +35,8 @@ This application uses the **Database-per-Tenant** strategy:
 
 - PHP 8.1 or higher
 - Composer
-- MySQL 8.0 or higher
+- PostgreSQL 12.0 or higher
+- PostgreSQL PHP extensions (pdo_pgsql, pgsql)
 - Node.js (for frontend assets)
 
 ### Step 1: Install Dependencies
@@ -47,6 +48,28 @@ composer install
 # Install Node.js dependencies
 npm install
 ```
+
+### Step 1.1: Install PostgreSQL PHP Extensions
+
+**For XAMPP/WAMP:**
+1. Open `php.ini` file (usually in `C:\xampp\php\php.ini`)
+2. Uncomment these lines by removing the semicolon (`;`):
+   ```
+   extension=pdo_pgsql
+   extension=pgsql
+   ```
+3. Restart Apache/Nginx
+
+**For Laragon:**
+1. Right-click Laragon tray icon → PHP → Extensions
+2. Enable `pdo_pgsql` and `pgsql`
+3. Restart Laragon
+
+**Verify Installation:**
+```bash
+php -m | grep pgsql
+```
+This should show `pdo_pgsql` and `pgsql` if properly installed.
 
 ### Step 2: Environment Configuration
 
@@ -60,14 +83,14 @@ php artisan key:generate
 
 ### Step 3: Database Configuration
 
-Edit your `.env` file with your database credentials:
+Edit your `.env` file with your PostgreSQL database credentials:
 
 ```env
-DB_CONNECTION=mysql
-DB_HOST=127.0.0.1
-DB_PORT=3306
-DB_DATABASE=one_ecommerce_main
-DB_USERNAME=your_username
+DB_CONNECTION=owner
+DB_HOST=localhost
+DB_PORT=5432
+DB_DATABASE=one_ecommerce
+DB_USERNAME=postgres
 DB_PASSWORD=your_password
 ```
 
@@ -76,7 +99,7 @@ DB_PASSWORD=your_password
 Create the main database that will store tenant information:
 
 ```sql
-CREATE DATABASE one_ecommerce_main;
+CREATE DATABASE one_ecommerce;
 ```
 
 ### Step 5: Run Main Database Migrations
@@ -88,6 +111,8 @@ php artisan migrate
 
 This will create the `tenants` table in your main database.
 
+**Note:** If you encounter "could not find driver" error, make sure PostgreSQL PHP extensions are properly installed (see Step 1.1).
+
 ## Tenant Management
 
 ### Creating a New Tenant
@@ -95,12 +120,12 @@ This will create the `tenants` table in your main database.
 Use the custom Artisan command to create a new tenant:
 
 ```bash
-php artisan tenant:create "Acme Corp" "acme.localhost"
+php artisan tenant:create "Acme Corp"
 ```
 
 This command will:
 1. Create a new tenant record in the main database
-2. Create a new database for the tenant (e.g., `tenant_acme_corp`)
+2. Create a new PostgreSQL database for the tenant (e.g., `tenant_acme_corp`)
 3. Run tenant-specific migrations
 
 ### Running Tenant Migrations
@@ -139,78 +164,65 @@ Create a few test tenants:
 
 ```bash
 # Create first tenant
-php artisan tenant:create "Store One" "store1.localhost"
+php artisan tenant:create "Store One"
 
 # Create second tenant
-php artisan tenant:create "Store Two" "store2.localhost"
+php artisan tenant:create "Store Two"
 ```
 
-### Step 3: Configure Local Domains
+### Step 3: Test Tenant Access
 
-Add the following entries to your hosts file:
+After creating tenants, you can access them by configuring your application to use the tenant database. The middleware will identify tenants based on the database name matching the domain.
 
-**Windows**: `C:\Windows\System32\drivers\etc\hosts`
-**macOS/Linux**: `/etc/hosts`
+For testing purposes, you can modify the middleware or create a simple route to switch between tenants programmatically.
 
-```
-127.0.0.1 store1.localhost
-127.0.0.1 store2.localhost
-```
-
-### Step 4: Test Tenant Access
-
-Now you can access each tenant:
-
-- **Store One**: `http://store1.localhost:8000/dashboard`
-- **Store Two**: `http://store2.localhost:8000/dashboard`
-
-Each tenant will have their own isolated dashboard and data.
+Each tenant will have their own isolated database and data.
 
 ## API Testing
 
 ### Tenant Information
 
-Get tenant information:
+Get tenant information (configure your application to use the specific tenant first):
 
 ```bash
-curl -H "Host: store1.localhost" http://localhost:8000/api/tenant
+curl http://localhost:8000/api/tenant
 ```
 
 ### Categories API
 
 ```bash
 # List categories
-curl -H "Host: store1.localhost" http://localhost:8000/api/categories
+curl http://localhost:8000/api/categories
 
 # Create a category
-curl -X POST -H "Host: store1.localhost" -H "Content-Type: application/json" \
+curl -X POST -H "Content-Type: application/json" \
   -d '{"name":"Electronics","description":"Electronic products"}' \
   http://localhost:8000/api/categories
 
 # Get a specific category
-curl -H "Host: store1.localhost" http://localhost:8000/api/categories/1
+curl http://localhost:8000/api/categories/1
 ```
 
 ### Products API
 
 ```bash
 # List products
-curl -H "Host: store1.localhost" http://localhost:8000/api/products
+curl http://localhost:8000/api/products
 
 # Create a product
-curl -X POST -H "Host: store1.localhost" -H "Content-Type: application/json" \
+curl -X POST -H "Content-Type: application/json" \
   -d '{"name":"iPhone 15","description":"Latest iPhone","price":999.99,"stock":10,"sku":"IP15-001","category_id":1}' \
   http://localhost:8000/api/products
 
 # Get a specific product
-curl -H "Host: store1.localhost" http://localhost:8000/api/products/1
+curl http://localhost:8000/api/products/1
 ```
 
 ## Database Structure
 
 ### Main Database Tables
 
-- **tenants**: Stores tenant information (id, name, domain, database)
+- **tenants**: Stores tenant information (id, name, database)
 - **users**: Main application users (if needed)
 - **cache**: Laravel cache table
 
@@ -302,11 +314,15 @@ public function seedSampleData()
 
 ### Common Issues
 
-1. **"Tenant not found" error**: Make sure the domain is correctly configured in your hosts file and the tenant exists in the database.
+1. **"Tenant not found" error**: Make sure the tenant exists in the database and the middleware can identify the correct tenant.
 
-2. **Database connection errors**: Verify your database credentials and ensure the tenant databases exist.
+2. **"could not find driver" error**: Install PostgreSQL PHP extensions (pdo_pgsql, pgsql). For XAMPP/WAMP, uncomment the extensions in php.ini. For Laragon, enable them through the menu.
 
-3. **Migration errors**: Make sure you've run the main migrations first, then create tenants and run tenant migrations.
+3. **Database connection errors**: Verify your PostgreSQL credentials and ensure the PostgreSQL service is running.
+
+4. **Migration errors**: Make sure you've run the main migrations first, then create tenants and run tenant migrations.
+
+5. **PostgreSQL syntax errors**: The application uses PostgreSQL-specific syntax. Make sure you're not mixing MySQL commands.
 
 ### Debugging
 
@@ -336,7 +352,7 @@ Check the logs in `storage/logs/laravel.log` for detailed error information.
 ## Production Deployment
 
 1. **Environment Configuration**: Set proper production environment variables
-2. **Database Optimization**: Configure MySQL for production workloads
+2. **Database Optimization**: Configure PostgreSQL for production workloads
 3. **Caching**: Enable Redis/Memcached for better performance
 4. **Queue Workers**: Set up queue workers for background tasks
 5. **Monitoring**: Implement proper logging and monitoring
