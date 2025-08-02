@@ -4,17 +4,19 @@ export const useApi = () => {
 
   const apiCall = async (endpoint, options = {}) => {
     try {
-      // Get CSRF token for web routes
       let headers = {
         'Content-Type': 'application/json',
         'Accept': 'application/json',
-        ...options.headers
+        ...options.headers,
+        ...(localStorage.getItem('auth_token') && {
+          'ctoken': localStorage.getItem('auth_token')
+        })
       }
 
-      const response = await $fetch(`${baseURL}${endpoint}`, {
+      const response = await $fetch(`${baseURL}/api${endpoint}`, {
         ...options,
         headers,
-        credentials: 'include' // Include cookies
+        credentials: 'include'
       })
       return response
     } catch (error) {
@@ -34,7 +36,7 @@ export const useApi = () => {
   const getTenantProducts = (tenantId) => {
     return apiCall('/tenant/products', {
       headers: {
-        'X-Tenant-ID': tenantId
+        'ctoken': tenantId
       }
     })
   }

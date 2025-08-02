@@ -35,7 +35,14 @@ class ProductController extends Controller
                     return $getProducts;
                 }
 
-                $finalData = $getProducts->getData()->data;
+                $productsWithTenant = collect($getProducts->getData()->data)->map(function($product) use ($tenantData) {
+                    return array_merge((array)$product, [
+                        'tenant_name' => $tenantData->name,
+                        'tenant_id' => $tenantData->id
+                    ]);
+                });
+
+                $finalData = $productsWithTenant;
             } else {
                 $allTenants = Tenant::query()->get();
                 foreach ($allTenants as $tenant) {
@@ -44,7 +51,13 @@ class ProductController extends Controller
                     $request->merge(['active'=> true]);
                     $getProducts = $this->index($request, true);
                     if ($getProducts->getData()->code == 200) {
-                        $finalData = $finalData->merge($getProducts->getData()->data);
+                        $productsWithTenant = collect($getProducts->getData()->data)->map(function($product) use ($tenant) {
+                            return array_merge((array)$product, [
+                                'tenant_name' => $tenant->name,
+                                'tenant_id' => $tenant->id
+                            ]);
+                        });
+                        $finalData = $finalData->merge($productsWithTenant);
                     }
                 }
             }
