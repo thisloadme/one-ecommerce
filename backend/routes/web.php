@@ -18,35 +18,39 @@ Route::get('/', function () {
 
 Route::post('login', [AuthController::class, 'login']);
 Route::post('register', [AuthController::class, 'register']);
-Route::post('logout', [AuthController::class, 'logout']);
 
-Route::get('tenants', [TenantController::class,'index']);
-Route::get('tenants/{tenant}', [TenantController::class,'show']);
+Route::middleware(['login'])->group(function () {
+    Route::post('logout', [AuthController::class, 'logout']);
 
-Route::middleware(['tenant'])->group(function () {
+    Route::get('tenants', [TenantController::class,'index']);
+    Route::get('tenants/{tenant}', [TenantController::class,'show']);
 
-    Route::prefix('tenant')->group(function () {
-        Route::get('products', [ProductController::class, 'index']);
-        Route::post('products', [ProductController::class, 'store']);
-        Route::get('products/{product}', [ProductController::class, 'show']);
-        Route::put('products/{product}', [ProductController::class, 'update']); 
-        Route::delete('products/{product}', [ProductController::class, 'destroy']);
-        
-        Route::get('/', function () {
-            $tenant = request()->attributes->get('tenant');
-            return ResponseHelper::basicResponse(
-                200,
-                [
-                    'id' => $tenant->id,
-                    'name' => $tenant->name,
-                ],
-                'Tenant info retrieved successfully'
-            );
+    Route::get('products', [ProductController::class, 'indexAll']);
+
+    Route::middleware(['tenant'])->group(function () {
+        Route::prefix('tenant')->group(function () {
+            Route::get('products', [ProductController::class, 'index']);
+            Route::post('products', [ProductController::class, 'store']);
+            Route::get('products/{product}', [ProductController::class, 'show']);
+            Route::put('products/{product}', [ProductController::class, 'update']); 
+            Route::delete('products/{product}', [ProductController::class, 'destroy']);
+            
+            Route::get('/', function () {
+                $tenant = request()->attributes->get('tenant');
+                return ResponseHelper::basicResponse(
+                    200,
+                    [
+                        'id' => $tenant->id,
+                        'name' => $tenant->name,
+                    ],
+                    'Tenant info retrieved successfully'
+                );
+            });
         });
+        
+        // Route::get('/dashboard', function () {
+        //     $tenant = request()->attributes->get('tenant');
+        //     return view('dashboard', compact('tenant'));
+        // });
     });
-    
-    // Route::get('/dashboard', function () {
-    //     $tenant = request()->attributes->get('tenant');
-    //     return view('dashboard', compact('tenant'));
-    // });
 });

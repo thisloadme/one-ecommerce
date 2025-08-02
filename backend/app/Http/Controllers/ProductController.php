@@ -3,16 +3,74 @@
 namespace App\Http\Controllers;
 
 use App\Models\Product;
+use App\Models\Tenant;
 use App\Providers\ResponseServiceProvider;
 use Illuminate\Http\Request;
 
 class ProductController extends Controller
 {
-    public function index(Request $request)
+    public function indexAll(Request $request) {
+        try {
+            $limit = $request->integer('limit', 15);
+            $page = $request->integer('page', 1);
+            $tenant = $request->input('tenant');
+
+            $finalData = collect();
+
+            if (!empty($tenant)) {
+                $tenantData = Tenant::query()->find($tenant);
+                if (!$tenantData) {
+                    return ResponseHelper::basicResponse(
+                        404,
+                        [],
+                        'Tenant not found'
+                    );
+                }
+
+                $tenantData->configure();
+
+                $request->merge(['active' => true]);
+                $getProducts = $this->index($request, true);
+                if ($getProducts->getData()->code != 200) {
+                    return $getProducts;
+                }
+
+                $finalData = $getProducts->getData()->data;
+            } else {
+                $allTenants = Tenant::query()->get();
+                foreach ($allTenants as $tenant) {
+                    $tenant->configure();
+
+                    $request->merge(['active'=> true]);
+                    $getProducts = $this->index($request, true);
+                    if ($getProducts->getData()->code == 200) {
+                        $finalData = $finalData->merge($getProducts->getData()->data);
+                    }
+                }
+            }
+
+            $finalData = $finalData->skip(($page - 1) * $limit)->take($limit)->values();
+
+            return ResponseHelper::basicResponse(
+                200,
+                $finalData,
+                'Products retrieved successfully'
+            );
+        } catch (\Throwable $th) {
+            return ResponseHelper::serverError(
+                'An error occurred while retrieving products',
+                $th->getMessage()
+            );
+        }
+    }
+
+    public function index(Request $request, $returnAll = false)
     {
         try {
             $active = $request->boolean('active');
             $search = $request->input('search');
+            $limit = $request->integer('limit', 15);
+            $page = $request->integer('page', 1);
 
             $products = Product::query()
                 ->when($active, function ($query) use ($active) {
@@ -21,8 +79,13 @@ class ProductController extends Controller
                 ->when($search, function ($query) use ($search) {
                     $query->where('name', 'ilike', "%{$search}%")
                         ->orWhere('sku', 'ilike', "%{$search}%");
-                })
-                ->paginate(15);
+                });
+
+            if ($returnAll) {
+                $products = $products->get();
+            } else {
+                $products = $products->paginate($limit, ['*'], 'page', $page);
+            }
 
             return ResponseHelper::basicResponse(
                 200,
