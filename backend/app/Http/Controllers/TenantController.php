@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Helpers\ResponseHelper;
 use App\Models\Tenant;
 use Illuminate\Http\Request;
 
@@ -31,9 +32,18 @@ class TenantController extends Controller
         }
     }
 
-    public function show(Tenant $tenant)
+    public function show(Request $request)
     {
         try {
+            $tenant = Tenant::query()->find($request->tenant);
+            if (!$tenant) {
+                return ResponseHelper::basicResponse(
+                    404,
+                    [],
+                    'Tenant not found'
+                );
+            }
+
             return ResponseHelper::basicResponse(
                 200,
                 $tenant,

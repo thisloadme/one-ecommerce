@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Helpers\ResponseHelper;
 use App\Models\Product;
 use App\Models\Tenant;
 use Illuminate\Http\Request;
@@ -126,9 +127,18 @@ class ProductController extends Controller
         }
     }
 
-    public function show(Product $product)
+    public function show(Request $request)
     {
         try {
+            $product = Product::query()->find($request->product);
+            if (!$product) {
+                return ResponseHelper::basicResponse(
+                    404,
+                    [],
+                    'Product not found'
+                );
+            }
+
             return ResponseHelper::basicResponse(
                 200,
                 $product,
@@ -142,9 +152,18 @@ class ProductController extends Controller
         }
     }
 
-    public function update(Request $request, Product $product)
+    public function update(Request $request)
     {
         try {
+            $product = Product::query()->find($request->product);
+            if (!$product) {
+                return ResponseHelper::basicResponse(
+                    404,
+                    [],
+                    'Product not found'
+                );
+            }
+
             $validated = $request->validate([
                 'name' => 'sometimes|string|max:255',
                 'description' => 'nullable|string',
@@ -169,9 +188,18 @@ class ProductController extends Controller
         }
     }
 
-    public function destroy(Product $product)
+    public function destroy(Request $request)
     {
         try {
+            $product = Product::query()->find($request->product);
+            if (!$product) {
+                return ResponseHelper::basicResponse(
+                    404,
+                    [],
+                    'Product not found'
+                );
+            }
+
             $product->delete();
 
             return ResponseHelper::basicResponse(

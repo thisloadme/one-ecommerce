@@ -10,7 +10,7 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Config;
 use Symfony\Component\HttpFoundation\Response;
 
-class TenantMiddleware
+class UserRegulerMiddleware
 {
     /**
      * Handle an incoming request.
@@ -29,21 +29,16 @@ class TenantMiddleware
             abort(401, 'Unauthorized');
         }
 
-        $tenantId = User::query()
+        $userData = User::query()
             ->where('id', $userId)
-            ->where('role', 'tenant')
-            ->value('tenant_id');
-        if (!$tenantId) {
-            abort(404, 'Tenant not found');
+            ->where('role', 'user')
+            ->first();
+        if (!$userData) {
+            abort(404, 'User not found');
         }
 
-        $tenant = Tenant::query()->find($tenantId);
+        $request->attributes->set('user', $userData);
 
-        $tenant->configure();
-        Config::set('database.default', 'tenant');
-
-        $request->attributes->set('tenant', $tenant);
-        
         return $next($request);
     }
 }

@@ -2,6 +2,8 @@
 
 namespace App\Http\Controllers;
 
+use App\Helpers\ResponseHelper;
+use App\Helpers\TokenHelper;
 use App\Models\User;
 use Hash;
 use Illuminate\Http\Request;
@@ -26,8 +28,7 @@ class AuthController extends Controller
                 );
             }
 
-            $encryptedPassword = Hash::make($validated['password']);
-            if ($encryptedPassword != $user->password) {
+            if (!Hash::check($validated['password'], $user->password)) {
                 return ResponseHelper::basicResponse(
                     401,
                     [],
@@ -39,10 +40,12 @@ class AuthController extends Controller
 
             return ResponseHelper::basicResponse(
                 200,
-                [
-                    'user' => $user,
-                    'token' => $token,
-                ],
+                array_merge(
+                    $user->toArray(),
+                    [
+                        'token' => $token,
+                    ]
+                ),
                 'Login successful'
             );
         } catch (ValidationException $e) {
@@ -75,7 +78,7 @@ class AuthController extends Controller
                 'password' => Hash::make($validated['password']),
                 'name' => $validated['name'],
                 'role' => $validated['role'],
-                'tenant_id' => $validated['tenant_id'],
+                'tenant_id' => $validated['tenant_id'] ?? null,
             ]);
 
             return ResponseHelper::basicResponse(

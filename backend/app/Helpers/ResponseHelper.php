@@ -1,12 +1,13 @@
 <?php
 
-namespace App\Http\Controllers;
+namespace App\Helpers;
 
 class ResponseHelper
 {
     public static function basicResponse($code = 200, $data = [], $message = null, $error = null)
     {
         return response()->json([
+            'code' => $code,
             'data' => $data,
             'message' => $message,
             'error'=> $error

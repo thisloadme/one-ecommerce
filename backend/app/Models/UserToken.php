@@ -11,6 +11,7 @@ class UserToken extends Model
     use HasFactory;
 
     protected $connection = 'owner';
+    public $timestamps = false;
 
     protected $fillable = [
         'user_id',
