@@ -2,15 +2,8 @@
 
 namespace App\Http\Controllers;
 
-use App\Models\Product;
 use App\Models\Tenant;
-use App\Models\User;
-use App\Models\UserToken;
-use App\Providers\ResponseServiceProvider;
-use Crypt;
-use Hash;
 use Illuminate\Http\Request;
-use Illuminate\Validation\ValidationException;
 
 class TenantController extends Controller
 {

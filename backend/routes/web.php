@@ -3,7 +3,6 @@
 use App\Http\Controllers\AuthController;
 use App\Http\Controllers\ResponseHelper;
 use App\Http\Controllers\TenantController;
-use App\Providers\ResponseServiceProvider;
 use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\ProductController;
 
@@ -11,7 +10,6 @@ Route::get('/', function () {
     return view('welcome');
 });
 
-// get /products
 // get /cart
 // post /cart/{product}
 // delete /cart/{product}

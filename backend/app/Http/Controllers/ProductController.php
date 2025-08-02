@@ -4,7 +4,6 @@ namespace App\Http\Controllers;
 
 use App\Models\Product;
 use App\Models\Tenant;
-use App\Providers\ResponseServiceProvider;
 use Illuminate\Http\Request;
 
 class ProductController extends Controller

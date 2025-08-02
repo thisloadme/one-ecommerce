@@ -2,10 +2,7 @@
 
 namespace App\Http\Controllers;
 
-use App\Models\Product;
 use App\Models\UserToken;
-use App\Providers\ResponseServiceProvider;
-use Illuminate\Http\Request;
 use Str;
 
 class TokenHelper
