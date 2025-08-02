@@ -9,7 +9,8 @@ use Illuminate\Http\Request;
 
 class ProductController extends Controller
 {
-    public function indexAll(Request $request) {
+    public function indexAll(Request $request)
+    {
         try {
             $limit = $request->integer('limit', 15);
             $page = $request->integer('page', 1);

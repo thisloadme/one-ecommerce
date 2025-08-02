@@ -2,6 +2,7 @@
 
 use App\Helpers\ResponseHelper;
 use App\Http\Controllers\AuthController;
+use App\Http\Controllers\CartController;
 use App\Http\Controllers\TenantController;
 use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\ProductController;
@@ -21,6 +22,10 @@ Route::middleware(['login'])->group(function () {
         Route::get('tenants/{tenant}', [TenantController::class,'show']);
 
         Route::get('products', [ProductController::class, 'indexAll']);
+
+        Route::get('cart', [CartController::class, 'index']);
+        Route::post('cart/{product}', [CartController::class, 'store']);
+        Route::delete('cart/{product}', [CartController::class, 'destroy']);
     });
 
     Route::middleware(['tenant'])->group(function () {
