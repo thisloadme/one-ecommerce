@@ -12,7 +12,16 @@
       </p>
     </div>
 
-    <div class="mt-8 sm:mx-auto sm:w-full sm:max-w-md">
+      <!-- Header Navigation -->
+      <div class="sm:mx-auto sm:w-full sm:max-w-md mb-4">
+        <div class="flex justify-between items-center">
+          <NuxtLink to="/" class="text-blue-600 hover:text-blue-800 transition-colors">
+            ← Back to Home
+          </NuxtLink>
+        </div>
+      </div>
+
+      <div class="mt-8 sm:mx-auto sm:w-full sm:max-w-md">
       <div class="bg-white py-8 px-4 shadow sm:rounded-lg sm:px-10">
         <!-- Error Message -->
         <div v-if="error" class="mb-4 bg-red-50 border border-red-200 rounded-md p-4">

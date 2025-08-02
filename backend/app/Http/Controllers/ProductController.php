@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Helpers\ResponseHelper;
+use App\Models\Cart;
 use App\Models\Product;
 use App\Models\Tenant;
 use Illuminate\Http\Request;
@@ -12,11 +13,18 @@ class ProductController extends Controller
     public function indexAll(Request $request)
     {
         try {
+            $user = $request->attributes->get("user");
+
             $limit = $request->integer('limit', 15);
             $page = $request->integer('page', 1);
             $tenant = $request->input('tenant');
 
             $finalData = collect();
+
+            $cart = Cart::query()
+                ->where('user_id', $user->id)
+                ->notPurchased()
+                ->get();
 
             if (!empty($tenant)) {
                 $tenantData = Tenant::query()->find($tenant);
@@ -36,10 +44,11 @@ class ProductController extends Controller
                     return $getProducts;
                 }
 
-                $productsWithTenant = collect($getProducts->getData()->data)->map(function($product) use ($tenantData) {
+                $productsWithTenant = collect($getProducts->getData()->data)->map(function($product) use ($tenantData, $cart) {
                     return array_merge((array)$product, [
                         'tenant_name' => $tenantData->name,
-                        'tenant_id' => $tenantData->id
+                        'tenant_id' => $tenantData->id,
+                        'qty_in_cart' => $cart->where('product_id', $product->id)->sum('quantity')
                     ]);
                 });
 
@@ -52,10 +61,11 @@ class ProductController extends Controller
                     $request->merge(['active'=> true]);
                     $getProducts = $this->index($request, true);
                     if ($getProducts->getData()->code == 200) {
-                        $productsWithTenant = collect($getProducts->getData()->data)->map(function($product) use ($tenant) {
+                        $productsWithTenant = collect($getProducts->getData()->data)->map(function($product) use ($tenant, $cart) {
                             return array_merge((array)$product, [
                                 'tenant_name' => $tenant->name,
-                                'tenant_id' => $tenant->id
+                                'tenant_id' => $tenant->id,
+                                'qty_in_cart' => $cart->where('product_id', $product->id)->sum('quantity')
                             ]);
                         });
                         $finalData = $finalData->merge($productsWithTenant);

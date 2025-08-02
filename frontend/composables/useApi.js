@@ -33,6 +33,10 @@ export const useApi = () => {
     return apiCall('/products')
   }
 
+  const getAllProductsByTenant = (tenantId) => {
+    return apiCall(`/products?tenant=${tenantId}`)
+  }
+
   const getTenantProducts = (tenantId) => {
     return apiCall('/tenant/products', {
       headers: {
@@ -55,11 +59,42 @@ export const useApi = () => {
     })
   }
 
+  const addToCart = (productId, tenantId) => {
+    return apiCall(`/cart/${productId}`, {
+      method: 'POST',
+      body: {
+        tenant_id: tenantId
+      }
+    })
+  }
+
+  const getCart = () => {
+    return apiCall('/cart')
+  }
+
+  const removeFromCart = (productId) => {
+    return apiCall(`/cart/${productId}`, {
+      method: 'DELETE'
+    })
+  }
+
+  const updateCartQuantity = (productId, quantity) => {
+    return apiCall(`/cart/${productId}`, {
+      method: 'PUT',
+      body: { quantity }
+    })
+  }
+
   return {
     getTenants,
     getAllProducts,
     getTenantProducts,
+    getAllProductsByTenant,
     login,
-    register
+    register,
+    addToCart,
+    getCart,
+    removeFromCart,
+    updateCartQuantity
   }
 }

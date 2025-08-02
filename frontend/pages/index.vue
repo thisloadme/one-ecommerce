@@ -15,7 +15,14 @@
               </NuxtLink>
             </template>
             <template v-else>
-              <span class="text-gray-600">Welcome back!</span>
+              <NuxtLink to="/cart" class="relative text-gray-600 hover:text-gray-900 transition-colors">
+                <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 3h2l.4 2M7 13h10l4-8H5.4m0 0L7 13m0 0l-1.5 6M7 13l-1.5-6M20 13v6a2 2 0 01-2 2H6a2 2 0 01-2-2v-6m16 0V9a2 2 0 00-2-2H6a2 2 0 00-2-2v4m16 0H4"></path>
+                </svg>
+                <span v-if="cartCount > 0" class="absolute -top-2 -right-2 bg-red-500 text-white text-xs rounded-full h-5 w-5 flex items-center justify-center">
+                  {{ cartCount }}
+                </span>
+              </NuxtLink>
               <button 
                 @click="handleLogout" 
                 class="bg-red-600 text-white px-4 py-2 rounded-md hover:bg-red-700 transition-colors"
@@ -58,7 +65,7 @@
               No tenants available
             </div>
             <div v-else class="space-y-4">
-              <div v-for="tenant in tenants" :key="tenant.id" 
+              <!-- <div v-for="tenant in tenants" :key="tenant.id" 
                    class="bg-white rounded-lg shadow-md hover:shadow-lg transition-shadow p-4 border border-gray-200">
                 <h3 class="text-lg font-semibold text-gray-900 mb-2">{{ tenant.name }}</h3>
                 <button @click="selectTenant(tenant)" 
@@ -70,7 +77,17 @@
                         ]">
                   {{ selectedTenant?.id === tenant.id ? 'Selected' : 'Select Tenant' }}
                 </button>
-              </div>
+              </div> -->
+              <button v-for="tenant in tenants" :key="tenant.id" 
+                  @click="selectTenant(tenant)" 
+                  :class="[
+                    'w-full px-4 py-2 rounded-md transition-colors text-sm',
+                    selectedTenant?.id === tenant.id 
+                      ? 'bg-blue-600 text-white' 
+                      : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+                  ]">
+                {{ tenant.name }}
+              </button>
             </div>
           </section>
 
@@ -112,8 +129,15 @@
                       {{ product.is_active ? 'Active' : 'Inactive' }}
                     </span>
                   </div>
-                  <button class="w-full bg-blue-600 text-white px-4 py-2 rounded-md hover:bg-blue-700 transition-colors">
-                    Add to Cart
+                  <button @click="handleAddToCart(product)" 
+                          :disabled="!product.is_active || product.stock === 0"
+                          :class="[
+                            'w-full px-4 py-2 rounded-md transition-colors',
+                            (!product.is_active || product.stock === 0)
+                              ? 'bg-gray-400 text-gray-200 cursor-not-allowed'
+                              : 'bg-blue-600 text-white hover:bg-blue-700'
+                          ]">
+                    {{ product.qty_in_cart > 0 ? product.qty_in_cart + ' In Cart' : 'Add to Cart' }}
                   </button>
                 </div>
               </div>
@@ -126,7 +150,7 @@
 </template>
 
 <script setup>
-const { getTenants, getAllProducts, getTenantProducts } = useApi()
+const { getTenants, getAllProducts, getTenantProducts, addToCart, getCart } = useApi()
 
 // Reactive data
 const tenants = ref([])
@@ -135,6 +159,7 @@ const selectedTenant = ref(null)
 const loading = ref(true)
 const error = ref(null)
 const isAuthenticated = ref(false)
+const cartCount = ref(0)
 
 function checkAuthStatus() {
   if (process.client) {
@@ -156,6 +181,9 @@ function handleLogout() {
 onMounted(async () => {
   checkAuthStatus()
   await loadData()
+  if (isAuthenticated.value) {
+    await loadCartCount()
+  }
 })
 
 async function loadData() {
@@ -185,7 +213,7 @@ async function selectTenant(tenant) {
     loading.value = true
     
     // Load tenant-specific products
-    const response = await getTenantProducts(tenant.id)
+    const response = await getAllProductsByTenant(tenant.id)
     products.value = response.data || []
   } catch (err) {
     console.error('Error loading tenant products:', err)
@@ -208,6 +236,44 @@ async function clearTenantSelection() {
     error.value = 'Failed to load products.'
   } finally {
     loading.value = false
+  }
+}
+
+async function loadCartCount() {
+  try {
+    const response = await getCart()
+    const cartItems = response.data || []
+    cartCount.value = cartItems.reduce((total, item) => total + item.quantity, 0)
+  } catch (err) {
+    console.error('Error loading cart count:', err)
+    cartCount.value = 0
+  }
+}
+
+async function handleAddToCart(product) {
+  if (!isAuthenticated.value) {
+    alert('Please login to add items to cart')
+    return
+  }
+  
+  try {
+    await addToCart(product.id, product.tenant_id)
+    alert('Product added to cart successfully!')
+    
+    // Reload products data
+    if (selectedTenant.value) {
+      const response = await getTenantProducts(selectedTenant.value.id)
+      products.value = response.data || []
+    } else {
+      const response = await getAllProducts()
+      products.value = response.data || []
+    }
+    
+    // Update cart count
+    await loadCartCount()
+  } catch (err) {
+    console.error('Error adding to cart:', err)
+    alert('Failed to add product to cart')
   }
 }
 

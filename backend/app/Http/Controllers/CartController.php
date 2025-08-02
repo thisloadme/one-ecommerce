@@ -13,7 +13,7 @@ class CartController extends Controller
     public function index(Request $request)
     {
         try {
-            $user = $request->user();
+            $user = $request->attributes->get("user");
 
             $cart = Cart::query()
                 ->where('user_id', $user->id)
@@ -48,10 +48,11 @@ class CartController extends Controller
     public function store(Request $request, $product)
     {
         try {
-            $user = $request->user();
+            $user = $request->attributes->get("user");
 
             $validated = $request->validate([
                 'tenant_id' => 'required|int',
+                'quantity' => 'nullable|int|min:1',
             ]);
 
             $tenant = Tenant::query()->findOrFail($validated['tenant_id']);
@@ -66,7 +67,7 @@ class CartController extends Controller
                 ->first();
 
             if ($existingCart) {
-                $existingCart->increment('quantity');
+                $existingCart->increment('quantity', $validated['quantity'] ?? 1);
                 $existingCart->update([
                     'subtotal' => $product->price * $existingCart->quantity
                 ]);
@@ -76,7 +77,7 @@ class CartController extends Controller
                     'user_id' => $user->id,
                     'database' => $tenant->database,
                     'product_id' => $product->id,
-                    'quantity' => 1,
+                    'quantity' => $validated['quantity'] ?? 1,
                     'subtotal' => $product->price,
                     'is_purchased' => false,
                 ]);
@@ -98,7 +99,7 @@ class CartController extends Controller
     public function destroy(Request $request, $product)
     {
         try {
-            $user = $request->user();
+            $user = $request->attributes->get("user");
 
             $validated = $request->validate([
                 'tenant_id' => 'required|int',
