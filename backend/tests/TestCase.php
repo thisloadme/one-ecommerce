@@ -13,55 +13,11 @@ abstract class TestCase extends BaseTestCase
     protected function setUp(): void
     {
         parent::setUp();
-        
-        // Set up test database
-        $this->setupTestDatabase();
     }
 
     protected function tearDown(): void
     {
-        // Clean up after each test
-        $this->cleanupTestDatabase();
-        
         parent::tearDown();
-    }
-
-    /**
-     * Set up the test database configuration
-     */
-    protected function setupTestDatabase(): void
-    {
-        // Configure test database connection
-        config([
-            'database.connections.testing' => [
-                'driver' => 'sqlite',
-                'database' => ':memory:',
-                'prefix' => '',
-                'foreign_key_constraints' => true,
-            ],
-            'database.default' => 'testing',
-        ]);
-    }
-
-    /**
-     * Clean up test database
-     */
-    protected function cleanupTestDatabase(): void
-    {
-        try {
-            // Clear all tables
-            DB::statement('PRAGMA foreign_keys = OFF');
-            
-            $tables = DB::select("SELECT name FROM sqlite_master WHERE type='table' AND name NOT LIKE 'sqlite_%'");
-            
-            foreach ($tables as $table) {
-                DB::statement("DROP TABLE IF EXISTS {$table->name}");
-            }
-            
-            DB::statement('PRAGMA foreign_keys = ON');
-        } catch (\Exception $e) {
-            // Ignore cleanup errors
-        }
     }
 
     /**

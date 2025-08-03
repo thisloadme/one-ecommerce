@@ -31,9 +31,9 @@ echo "1. Creating test tenants...\n";
 
 try {
     // Clean up existing test tenants
-    $existingTenants = Tenant::whereIn('domain', ['test1.localhost', 'test2.localhost'])->get();
+    $existingTenants = Tenant::whereIn('database', ['tenant_test_store_1', 'tenant_test_store_2'])->get();
     foreach ($existingTenants as $tenant) {
-        echo "   Cleaning up existing tenant: {$tenant->name}\n";
+        echo "Cleaning up existing tenant: {$tenant->name}\n";
         $tenant->dropDatabase();
         $tenant->delete();
     }
@@ -41,23 +41,21 @@ try {
     // Create tenant 1
     $tenant1 = Tenant::create([
         'name' => 'Test Store 1',
-        'domain' => 'test1.localhost',
         'database' => 'tenant_test_store_1'
     ]);
     TenantServiceProvider::createTenantDatabase($tenant1);
-    echo "   ✓ Created tenant: {$tenant1->name} ({$tenant1->domain})\n";
+    echo "Created tenant: {$tenant1->name} ({$tenant1->database})\n";
 
     // Create tenant 2
     $tenant2 = Tenant::create([
         'name' => 'Test Store 2',
-        'domain' => 'test2.localhost',
         'database' => 'tenant_test_store_2'
     ]);
     TenantServiceProvider::createTenantDatabase($tenant2);
-    echo "   ✓ Created tenant: {$tenant2->name} ({$tenant2->domain})\n";
+    echo "Created tenant: {$tenant2->name} ({$tenant2->database})\n";
 
 } catch (Exception $e) {
-    echo "   ✗ Error creating tenants: " . $e->getMessage() . "\n";
+    echo "Error creating tenants: " . $e->getMessage() . "\n";
     exit(1);
 }
 
@@ -77,7 +75,7 @@ try {
         'sku' => 'LAPTOP-S1-001',
     ]);
     
-    echo "   ✓ Added data to tenant 1: {$product1->name}\n";
+    echo "Added data to tenant 1: {$product1->name}\n";
     
     // Configure tenant 2 and add different data
     $tenant2->configure();
@@ -91,10 +89,10 @@ try {
         'sku' => 'BOOK-S2-001',
     ]);
     
-    echo "   ✓ Added data to tenant 2: {$product2->name}\n";
+    echo "Added data to tenant 2: {$product2->name}\n";
     
 } catch (Exception $e) {
-    echo "   ✗ Error adding test data: " . $e->getMessage() . "\n";
+    echo "Error adding test data: " . $e->getMessage() . "\n";
     exit(1);
 }
 
@@ -108,7 +106,7 @@ try {
     
     $tenant1Products = Product::count();
     
-    echo "   Tenant 1 - Products: {$tenant1Products}\n";
+    echo "Tenant 1 - Products: {$tenant1Products}\n";
     
     // Check tenant 2 data
     $tenant2->configure();
@@ -116,17 +114,17 @@ try {
     
     $tenant2Products = Product::count();
     
-    echo "   Tenant 2 - Products: {$tenant2Products}\n";
+    echo "Tenant 2 - Products: {$tenant2Products}\n";
     
     // Verify isolation
     if ($tenant1Products === 1 && $tenant2Products === 1) {
-        echo "   ✓ Data isolation verified - each tenant has separate data\n";
+        echo "Data isolation verified - each tenant has separate data\n";
     } else {
-        echo "   ✗ Data isolation failed - products may be shared between tenants\n";
+        echo "Data isolation failed - products may be shared between tenants\n";
     }
     
 } catch (Exception $e) {
-    echo "   ✗ Error verifying data isolation: " . $e->getMessage() . "\n";
+    echo "Error verifying data isolation: " . $e->getMessage() . "\n";
     exit(1);
 }
 
@@ -139,19 +137,19 @@ try {
     \Illuminate\Support\Facades\Config::set('database.default', 'tenant');
     
     $tenant1ApiProducts = Product::query()->get();
-    echo "   Tenant 1 API - Products: " . $tenant1ApiProducts->count() . "\n";
+    echo "Tenant 1 API - Products: " . $tenant1ApiProducts->count() . "\n";
     
     // Simulate tenant 2 API request
     $tenant2->configure();
     \Illuminate\Support\Facades\Config::set('database.default', 'tenant');
     
     $tenant2ApiProducts = Product::query()->get();
-    echo "   Tenant 2 API - Products: " . $tenant2ApiProducts->count() . "\n";
+    echo "Tenant 2 API - Products: " . $tenant2ApiProducts->count() . "\n";
     
-    echo "   ✓ API simulation successful\n";
+    echo "API simulation successful\n";
     
 } catch (Exception $e) {
-    echo "   ✗ Error simulating API requests: " . $e->getMessage() . "\n";
+    echo "Error simulating API requests: " . $e->getMessage() . "\n";
     exit(1);
 }
 
@@ -175,13 +173,13 @@ try {
     $endTime = microtime(true);
     $executionTime = round(($endTime - $startTime) * 1000, 2);
     
-    echo "   ✓ 20 tenant switches completed in {$executionTime}ms\n";
+    echo "20 tenant switches completed in {$executionTime}ms\n";
     
 } catch (Exception $e) {
-    echo "   ✗ Error in performance test: " . $e->getMessage() . "\n";
+    echo "Error in performance test: " . $e->getMessage() . "\n";
 }
 
 echo "\n=== Test Summary ===\n";
-echo "✓ Multi-tenancy setup is working correctly!\n";
-echo "✓ Data isolation is functioning properly\n";
-echo "✓ Database switching is operational\n";
+echo "- Multi-tenancy setup is working correctly!\n";
+echo "- Data isolation is functioning properly\n";
+echo "- Database switching is operational\n";
