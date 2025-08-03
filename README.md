@@ -1,8 +1,8 @@
-# Laravel Multi-Tenancy E-commerce Application
+# Multi-Tenancy E-commerce Application
 
-A Laravel e-commerce application with multi-tenancy features using database-per-tenant strategy.
+A multi-tenant e-commerce application with database-per-tenant strategy.
 
-## Application Setup
+## Backend Setup (Laravel)
 
 ### Prerequisites
 
@@ -12,7 +12,13 @@ A Laravel e-commerce application with multi-tenancy features using database-per-
 - PostgreSQL PHP extensions (pdo_pgsql, pgsql)
 - Node.js
 
-### Step 1: Install Dependencies
+### Step 1: Navigate to Backend Directory
+
+```bash
+cd backend
+```
+
+### Step 2: Install Dependencies
 
 ```bash
 # Install PHP dependencies
@@ -22,7 +28,7 @@ composer install
 npm install
 ```
 
-### Step 2: Install PostgreSQL PHP Extensions
+### Step 3: Install PostgreSQL PHP Extensions
 
 **XAMPP/WAMP:**
 1. Open `php.ini` file (usually at `C:\xampp\php\php.ini`)
@@ -43,7 +49,7 @@ npm install
 php -m | grep pgsql
 ```
 
-### Step 3: Environment Configuration
+### Step 4: Environment Configuration
 
 ```bash
 # Copy environment file
@@ -53,7 +59,7 @@ cp .env.example .env
 php artisan key:generate
 ```
 
-### Step 4: Database Configuration
+### Step 5: Database Configuration
 
 Edit `.env` file with PostgreSQL credentials:
 
@@ -66,13 +72,13 @@ DB_USERNAME=postgres
 DB_PASSWORD=your_password
 ```
 
-### Step 5: Create Main Database
+### Step 6: Create Main Database
 
 ```sql
 CREATE DATABASE one_ecommerce;
 ```
 
-### Step 6: Run Migrations
+### Step 7: Run Migrations
 
 ```bash
 # Main database migration
@@ -82,13 +88,66 @@ php artisan migrate
 php artisan migrate --env=testing
 ```
 
-### Step 7: Run Development Server
+### Step 8: Run Development Server
 
 ```bash
 php artisan serve
 ```
 
 Application will be available at `http://localhost:8000`
+
+## Frontend Setup (Nuxt.js)
+
+### Step 1: Navigate to Frontend Directory
+
+```bash
+cd frontend
+```
+
+### Step 2: Install Frontend Dependencies
+
+```bash
+# Install Node.js dependencies
+npm install
+```
+
+### Step 3: Frontend Environment Configuration
+
+```bash
+# Copy frontend environment file
+cp .env.example .env
+```
+
+Edit `.env` file with backend API URL:
+
+```env
+VITE_API_URL=http://localhost:8000
+```
+
+### Step 4: Run Frontend Development Server
+
+```bash
+# Start Nuxt.js development server
+npm run dev
+```
+
+Frontend will be available at `http://localhost:3000`
+
+### Frontend Build Commands
+
+```bash
+# Build for production
+npm run build
+
+# Generate static site
+npm run generate
+
+# Preview production build
+npm run preview
+
+# Start production server
+npm run start
+```
 
 ## Testing Multi-Tenancy
 
