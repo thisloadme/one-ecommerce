@@ -20,6 +20,9 @@ class UserRegulerMiddleware
     public function handle(Request $request, Closure $next): Response
     {
         $ctoken = $request->header('ctoken');
+        if (empty($ctoken)) {
+            return $next($request);
+        }
 
         $userId = UserToken::query()
             ->where('token', $ctoken)

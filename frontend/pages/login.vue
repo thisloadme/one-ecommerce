@@ -1,5 +1,13 @@
 <template>
   <div class="min-h-screen bg-gray-50 flex flex-col justify-center py-12 sm:px-6 lg:px-8">
+    <div class="sm:mx-auto sm:w-full sm:max-w-md mb-4">
+      <div class="flex justify-between items-center">
+        <NuxtLink to="/" class="text-blue-600 hover:text-blue-800 transition-colors">
+          ← Back to Home
+        </NuxtLink>
+      </div>
+    </div>
+
     <div class="sm:mx-auto sm:w-full sm:max-w-md">
       <h2 class="mt-6 text-center text-3xl font-extrabold text-gray-900">
         Sign in to your account
@@ -9,17 +17,12 @@
         <NuxtLink to="/register" class="font-medium text-blue-600 hover:text-blue-500">
           create a new account
         </NuxtLink>
+        |
+        <NuxtLink to="/register-tenant" class="font-medium text-blue-600 hover:text-blue-500">
+          register as tenant
+        </NuxtLink>
       </p>
     </div>
-
-    <!-- Header Navigation -->
-     <div class="sm:mx-auto sm:w-full sm:max-w-md mb-4">
-       <div class="flex justify-between items-center">
-         <NuxtLink to="/" class="text-blue-600 hover:text-blue-800 transition-colors">
-           ← Back to Home
-         </NuxtLink>
-       </div>
-     </div>
 
     <div class="mt-8 sm:mx-auto sm:w-full sm:max-w-md">
       <div class="bg-white py-8 px-4 shadow sm:rounded-lg sm:px-10">
@@ -105,6 +108,28 @@
 <script setup>
 const { login } = useApi()
 
+// Check if user is already authenticated
+function checkExistingAuth() {
+  if (process.client) {
+    const token = localStorage.getItem('auth_token')
+    const role = localStorage.getItem('user_role')
+    
+    if (token) {
+      // Redirect based on role
+      if (role === 'tenant') {
+        navigateTo('/tenant-dashboard')
+      } else {
+        navigateTo('/')
+      }
+    }
+  }
+}
+
+// Check auth on component mount
+onMounted(() => {
+  checkExistingAuth()
+})
+
 // Form data
 const form = ref({
   email: '',
@@ -132,15 +157,22 @@ async function handleLogin() {
 
     success.value = 'Login successful! Redirecting...'
     
-    // Store token if provided
+    // Store token and user data if provided
     if (response.data?.token) {
-      // You can store token in localStorage, cookie, or Pinia store
       localStorage.setItem('auth_token', response.data.token)
     }
+    
+    if (response.data?.role) {
+      localStorage.setItem('user_role', response.data.role)
+    }
 
-    // Redirect to home page after successful login
+    // Redirect based on user role
     setTimeout(() => {
-      navigateTo('/')
+      if (response.data?.role === 'tenant') {
+        navigateTo('/tenant-dashboard')
+      } else {
+        navigateTo('/')
+      }
     }, 1500)
 
   } catch (err) {

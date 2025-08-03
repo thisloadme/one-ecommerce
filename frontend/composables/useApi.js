@@ -37,12 +37,32 @@ export const useApi = () => {
     return apiCall(`/products?tenant=${tenantId}`)
   }
 
-  const getTenantProducts = (tenantId) => {
+  const getTenantProducts = (page = 1) => {
+    return apiCall(`/tenant/products?page=${page}`)
+  }
+
+  const createTenantProduct = (productData) => {
     return apiCall('/tenant/products', {
-      headers: {
-        'ctoken': tenantId
-      }
+      method: 'POST',
+      body: productData
     })
+  }
+
+  const updateTenantProduct = (productId, productData) => {
+    return apiCall(`/tenant/products/${productId}`, {
+      method: 'PUT',
+      body: productData
+    })
+  }
+
+  const deleteTenantProduct = (productId) => {
+    return apiCall(`/tenant/products/${productId}`, {
+      method: 'DELETE'
+    })
+  }
+
+  const getTenantProduct = (productId) => {
+    return apiCall(`/tenant/products/${productId}`)
   }
 
   const login = (credentials) => {
@@ -72,16 +92,25 @@ export const useApi = () => {
     return apiCall('/cart')
   }
 
-  const removeFromCart = (productId) => {
-    return apiCall(`/cart/${productId}`, {
+  const removeFromCart = (productId, tenantId) => {
+    return apiCall(`/cart/${productId}?is_delete=1&tenant_id=${tenantId}`, {
       method: 'DELETE'
     })
   }
 
-  const updateCartQuantity = (productId, quantity) => {
+  const updateCartQuantity = (productId, quantity, tenantId) => {
     return apiCall(`/cart/${productId}`, {
-      method: 'PUT',
-      body: { quantity }
+      method: 'POST',
+      body: { 
+        quantity,
+        tenant_id: tenantId
+      }
+    })
+  }
+
+  const checkoutCart = () => {
+    return apiCall(`/checkout`, {
+      method: 'POST'
     })
   }
 
@@ -89,12 +118,17 @@ export const useApi = () => {
     getTenants,
     getAllProducts,
     getTenantProducts,
+    createTenantProduct,
+    updateTenantProduct,
+    deleteTenantProduct,
+    getTenantProduct,
     getAllProductsByTenant,
     login,
     register,
     addToCart,
     getCart,
     removeFromCart,
-    updateCartQuantity
+    updateCartQuantity,
+    checkoutCart
   }
 }

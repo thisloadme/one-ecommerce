@@ -1,39 +1,7 @@
 <template>
   <div class="min-h-screen bg-gray-50">
     <!-- Header -->
-    <header class="bg-white shadow-sm border-b">
-      <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        <div class="flex justify-between items-center h-16">
-          <h1 class="text-2xl font-bold text-gray-900">One Ecommerce</h1>
-          <div class="flex items-center space-x-4">
-            <template v-if="!isAuthenticated">
-              <NuxtLink to="/login" class="text-gray-600 hover:text-gray-900 transition-colors">
-                Login
-              </NuxtLink>
-              <NuxtLink to="/register" class="bg-blue-600 text-white px-4 py-2 rounded-md hover:bg-blue-700 transition-colors">
-                Register
-              </NuxtLink>
-            </template>
-            <template v-else>
-              <NuxtLink to="/cart" class="relative text-gray-600 hover:text-gray-900 transition-colors">
-                <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 3h2l.4 2M7 13h10l4-8H5.4m0 0L7 13m0 0l-1.5 6M7 13l-1.5-6M20 13v6a2 2 0 01-2 2H6a2 2 0 01-2-2v-6m16 0V9a2 2 0 00-2-2H6a2 2 0 00-2-2v4m16 0H4"></path>
-                </svg>
-                <span v-if="cartCount > 0" class="absolute -top-2 -right-2 bg-red-500 text-white text-xs rounded-full h-5 w-5 flex items-center justify-center">
-                  {{ cartCount }}
-                </span>
-              </NuxtLink>
-              <button 
-                @click="handleLogout" 
-                class="bg-red-600 text-white px-4 py-2 rounded-md hover:bg-red-700 transition-colors"
-              >
-                Logout
-              </button>
-            </template>
-          </div>
-        </div>
-      </div>
-    </header>
+    <AppHeader :cart-count="cartCount" @logout="handleLogout" />
 
     <!-- Main Content -->
     <main class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
@@ -65,19 +33,6 @@
               No tenants available
             </div>
             <div v-else class="space-y-4">
-              <!-- <div v-for="tenant in tenants" :key="tenant.id" 
-                   class="bg-white rounded-lg shadow-md hover:shadow-lg transition-shadow p-4 border border-gray-200">
-                <h3 class="text-lg font-semibold text-gray-900 mb-2">{{ tenant.name }}</h3>
-                <button @click="selectTenant(tenant)" 
-                        :class="[
-                          'w-full px-4 py-2 rounded-md transition-colors text-sm',
-                          selectedTenant?.id === tenant.id 
-                            ? 'bg-blue-600 text-white' 
-                            : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
-                        ]">
-                  {{ selectedTenant?.id === tenant.id ? 'Selected' : 'Select Tenant' }}
-                </button>
-              </div> -->
               <button v-for="tenant in tenants" :key="tenant.id" 
                   @click="selectTenant(tenant)" 
                   :class="[
@@ -115,19 +70,11 @@
                   <h3 class="text-lg font-semibold text-gray-900 mb-2">{{ product.name }}</h3>
                   <p class="text-gray-600 text-sm mb-3 line-clamp-2">{{ product.description }}</p>
                   <div class="flex justify-between items-center mb-3">
-                    <span class="text-2xl font-bold text-blue-600">IDR {{ product.price }}</span>
+                    <span class="text-2xl font-bold text-blue-600">IDR {{ product.price.toLocaleString() }}</span>
                     <span class="text-sm text-gray-500">Stock: {{ product.stock }}</span>
                   </div>
                   <div class="flex justify-between items-center mb-4">
                     <span class="text-xs text-gray-400">SKU: {{ product.sku }}</span>
-                    <span :class="[
-                      'px-2 py-1 rounded-full text-xs font-medium',
-                      product.is_active 
-                        ? 'bg-green-100 text-green-800' 
-                        : 'bg-red-100 text-red-800'
-                    ]">
-                      {{ product.is_active ? 'Active' : 'Inactive' }}
-                    </span>
                   </div>
                   <button @click="handleAddToCart(product)" 
                           :disabled="!product.is_active || product.stock === 0"
@@ -150,7 +97,7 @@
 </template>
 
 <script setup>
-const { getTenants, getAllProducts, getTenantProducts, addToCart, getCart } = useApi()
+const { getTenants, getAllProducts, getTenantProducts, getAllProductsByTenant, addToCart, getCart } = useApi()
 
 // Reactive data
 const tenants = ref([])
@@ -169,12 +116,7 @@ function checkAuthStatus() {
 }
 
 function handleLogout() {
-  if (process.client) {
-    localStorage.removeItem('auth_token')
-    isAuthenticated.value = false
-    // Optionally redirect to home or show success message
-    window.location.reload() // Refresh to reset any authenticated state
-  }
+  // Header component will handle the logout logic
 }
 
 // Fetch initial data

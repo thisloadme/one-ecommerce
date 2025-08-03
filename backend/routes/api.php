@@ -7,25 +7,24 @@ use App\Http\Controllers\TenantController;
 use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\ProductController;
 
-// get /cart
-// post /cart/{product}
-// delete /cart/{product}
-
 Route::post('login', [AuthController::class, 'login']);
 Route::post('register', [AuthController::class, 'register']);
+
+Route::middleware(['reguler'])->group(function () {
+    Route::get('tenants', [TenantController::class,'index']);
+    Route::get('tenants/{tenant}', [TenantController::class,'show']);
+
+    Route::get('products', [ProductController::class, 'indexAll']);
+});
 
 Route::middleware(['login'])->group(function () {
     Route::post('logout', [AuthController::class, 'logout']);
 
     Route::middleware(['reguler'])->group(function () {
-        Route::get('tenants', [TenantController::class,'index']);
-        Route::get('tenants/{tenant}', [TenantController::class,'show']);
-
-        Route::get('products', [ProductController::class, 'indexAll']);
-
         Route::get('cart', [CartController::class, 'index']);
         Route::post('cart/{product}', [CartController::class, 'store']);
         Route::delete('cart/{product}', [CartController::class, 'destroy']);
+        Route::post('checkout', [CartController::class, 'checkout']);
     });
 
     Route::middleware(['tenant'])->group(function () {

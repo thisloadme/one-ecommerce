@@ -1,37 +1,11 @@
 <template>
   <div class="min-h-screen bg-gray-50">
     <!-- Header -->
-    <header class="bg-white shadow-sm border-b">
-      <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        <div class="flex justify-between items-center h-16">
-          <div class="flex items-center space-x-4">
-            <NuxtLink to="/" class="text-2xl font-bold text-gray-900 hover:text-blue-600 transition-colors">
-              One Ecommerce
-            </NuxtLink>
-            <span class="text-gray-400">/</span>
-            <h1 class="text-xl font-semibold text-gray-700">Shopping Cart</h1>
-          </div>
-          <div class="flex items-center space-x-4">
-            <template v-if="!isAuthenticated">
-              <NuxtLink to="/login" class="text-gray-600 hover:text-gray-900 transition-colors">
-                Login
-              </NuxtLink>
-              <NuxtLink to="/register" class="bg-blue-600 text-white px-4 py-2 rounded-md hover:bg-blue-700 transition-colors">
-                Register
-              </NuxtLink>
-            </template>
-            <template v-else>
-              <button 
-                @click="handleLogout" 
-                class="bg-red-600 text-white px-4 py-2 rounded-md hover:bg-red-700 transition-colors"
-              >
-                Logout
-              </button>
-            </template>
-          </div>
-        </div>
-      </div>
-    </header>
+    <AppHeader 
+      :show-breadcrumb="true" 
+      breadcrumb-title="Shopping Cart" 
+      :show-cart-button="false" 
+    />
 
     <!-- Main Content -->
     <main class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
@@ -80,11 +54,11 @@
                 <div class="flex items-center space-x-4">
                   <!-- Product Info -->
                   <div class="flex-1">
-                    <h3 class="text-lg font-medium text-gray-900">{{ item.product.name }}</h3>
-                    <p class="text-gray-600 text-sm mt-1">{{ item.product.description }}</p>
+                    <h3 class="text-lg font-medium text-gray-900">{{ item.product_name }}</h3>
+                    <p class="text-gray-600 text-sm mt-1">{{ item.description }}</p>
                     <div class="flex items-center mt-2 space-x-4">
-                      <span class="text-sm text-gray-500">SKU: {{ item.product.sku }}</span>
-                      <span class="text-lg font-bold text-blue-600">IDR {{ item.product.price }}</span>
+                      <span class="text-sm text-gray-500">SKU: {{ item.product_sku }}</span>
+                      <span class="text-lg font-bold text-blue-600">IDR {{ item.price.toLocaleString() }}</span>
                     </div>
                   </div>
 
@@ -93,20 +67,20 @@
                     <button 
                       @click="updateQuantity(item, item.quantity - 1)"
                       :disabled="item.quantity <= 1"
-                      class="w-8 h-8 rounded-full border border-gray-300 flex items-center justify-center hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed"
+                      class="w-8 h-8 rounded-full border text-gray-500 border-gray-300 flex items-center justify-center hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed"
                     >
-                      <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20 12H4"></path>
-                      </svg>
+                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20 12H4"></path>
+                    </svg>
                     </button>
-                    <span class="w-12 text-center font-medium">{{ item.quantity }}</span>
+                    <span class="w-12 text-center text-gray-700 font-medium">{{ item.quantity }}</span>
                     <button 
                       @click="updateQuantity(item, item.quantity + 1)"
-                      :disabled="item.quantity >= item.product.stock"
-                      class="w-8 h-8 rounded-full border border-gray-300 flex items-center justify-center hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed"
+                      :disabled="item.quantity >= item.stock"
+                      class="w-8 h-8 rounded-full border text-blue-600 border-gray-300 flex items-center justify-center hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed"
                     >
                       <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6"></path>
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"></path>
                       </svg>
                     </button>
                   </div>
@@ -114,7 +88,7 @@
                   <!-- Subtotal -->
                   <div class="text-right">
                     <div class="text-lg font-bold text-gray-900">
-                      IDR {{ (item.product.price * item.quantity).toLocaleString() }}
+                      IDR {{ (item.price * item.quantity).toLocaleString() }}
                     </div>
                     <button 
                       @click="removeItem(item)"
@@ -138,8 +112,12 @@
                   <NuxtLink to="/" class="px-6 py-3 border border-gray-300 rounded-md text-gray-700 hover:bg-gray-50 transition-colors">
                     Continue Shopping
                   </NuxtLink>
-                  <button class="px-6 py-3 bg-blue-600 text-white rounded-md hover:bg-blue-700 transition-colors">
-                    Proceed to Checkout
+                  <button 
+                    @click="handleCheckout"
+                    :disabled="loading"
+                    class="px-6 py-3 bg-blue-600 text-white rounded-md hover:bg-blue-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                  >
+                    {{ loading ? 'Processing...' : 'Proceed to Checkout' }}
                   </button>
                 </div>
               </div>
@@ -152,7 +130,7 @@
 </template>
 
 <script setup>
-const { getCart, removeFromCart, updateCartQuantity } = useApi()
+const { getCart, removeFromCart, updateCartQuantity, checkoutCart } = useApi()
 
 // Reactive data
 const cartItems = ref([])
@@ -166,21 +144,13 @@ const totalItems = computed(() => {
 })
 
 const totalPrice = computed(() => {
-  return cartItems.value.reduce((total, item) => total + (item.product.price * item.quantity), 0)
+  return cartItems.value.reduce((total, item) => total + (item.price * item.quantity), 0)
 })
 
 function checkAuthStatus() {
   if (process.client) {
     const token = localStorage.getItem('auth_token')
     isAuthenticated.value = !!token
-  }
-}
-
-function handleLogout() {
-  if (process.client) {
-    localStorage.removeItem('auth_token')
-    isAuthenticated.value = false
-    window.location.reload()
   }
 }
 
@@ -210,10 +180,10 @@ async function loadCart() {
 }
 
 async function updateQuantity(item, newQuantity) {
-  if (newQuantity < 1 || newQuantity > item.product.stock) return
+  if (newQuantity < 1 || newQuantity > item.stock) return
   
   try {
-    await updateCartQuantity(item.product.id, newQuantity)
+    await updateCartQuantity(item.id, newQuantity, item.tenant_id)
     item.quantity = newQuantity
   } catch (err) {
     console.error('Error updating quantity:', err)
@@ -225,11 +195,28 @@ async function removeItem(item) {
   if (!confirm('Are you sure you want to remove this item from cart?')) return
   
   try {
-    await removeFromCart(item.product.id)
+    await removeFromCart(item.id, item.tenant_id)
     cartItems.value = cartItems.value.filter(cartItem => cartItem.id !== item.id)
   } catch (err) {
     console.error('Error removing item:', err)
     alert('Failed to remove item from cart')
+  }
+}
+
+async function handleCheckout() {
+  const confirmed = confirm(`Are you sure you want to proceed with checkout?\n\nTotal: IDR ${totalPrice.value.toLocaleString()}\nItems: ${totalItems.value}`);
+  if (!confirmed) return;
+  
+  try {
+    loading.value = true;
+    await checkoutCart();
+    alert('Checkout successful! Your order has been placed.');
+    await loadCart();
+  } catch (err) {
+    console.error('Error during checkout:', err);
+    alert('Failed to process checkout. Please try again.');
+  } finally {
+    loading.value = false;
   }
 }
 

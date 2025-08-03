@@ -22,7 +22,7 @@ class ProductController extends Controller
             $finalData = collect();
 
             $cart = Cart::query()
-                ->where('user_id', $user->id)
+                ->where('user_id', $user?->id)
                 ->notPurchased()
                 ->get();
 
